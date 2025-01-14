@@ -18,13 +18,17 @@ model User {
   name  String
   age   Int
   posts Post[]
-  @@index([name])
+  @@index([age]) // Danh index de tang toc do truy van theo age
+  @@fulltext([name], map: "fulltext_name_index") // Tang toc tim kiem: LIKE %abc%
+  @@map("user")
 }
 
 model Post {
   id      String @id @default(uuid())
   title   String
-  userId  String
+  userId  String @map("user_id")
   user    User   @relation(fields: [userId], references: [id])
-  @@unique([userId, title])
+  @@index([userId]) // Danh index de tang toc do truy van theo userId (tim kiem tat ca cac bai post cua 1 user)
+  @@fulltext([title], map: "fulltext_title_index") // Tang toc tim kiem: LIKE %abc%
+  @@map("post")
 }

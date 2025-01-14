@@ -13,8 +13,8 @@ app.post('/users', async (req, res) => {
 
         const user = await prisma.user.create({
             data: {
-                name: name,
-                age: age,
+                name,
+                age,
             },
         });
 
@@ -35,16 +35,19 @@ app.get('/users', async (req, res) => {
         const pageSize = parseInt(limit as string, 10);
 
         const offset = (pageNumber - 1) * pageSize;
-        const users = await prisma.user.findMany(
-            {
-                skip: offset,       // Bo qua cac ban ghi truoc do
-                take: pageSize,     // Lay so luong ban ghi theo gioi han
-                include: {          // Lay danh sach post cho tung user tuong ung
-                    posts: true,
-                },
-            }
-        );
-        const totalUsers = await prisma.user.count();
+        const [users, totalUsers] = await Promise.all(
+            [
+                prisma.user.findMany(
+                    {
+                        skip: offset,       // Bo qua cac ban ghi truoc do
+                        take: pageSize,     // Lay so luong ban ghi theo gioi han
+                        select: {          // Lay danh sach post cho tung user tuong ung
+                            posts: true,
+                        },
+                    }
+                ),
+                prisma.user.count()
+            ])
 
         res.json({
             totalUsers,
@@ -62,7 +65,7 @@ app.get('/users/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const users= await prisma.user.findUnique({
-            where: {id: id},
+            where: {id},
             include : {
                 posts: true,
             }
@@ -107,6 +110,7 @@ app.delete('/users/:id', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Something went wrong.' });
     }
+
 })
 
 // Doi ten user va bai post dau tien cua user do
